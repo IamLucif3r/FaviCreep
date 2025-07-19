@@ -1,4 +1,7 @@
-# FaviCreep : Hunt Forgotten Infrastructure via Favicon Hash Clustering
+<img width="1028" height="467" alt="Screenshot 2025-07-20 at 01 35 45" src="https://github.com/user-attachments/assets/0d3cad60-d8d9-4d19-8538-c4c7b3368a9c" />
+
+
+# FaviCreep
 
 > "Every forgotten panel tells a story... and leaves a door wide open."  
 > — Unknown Bug Bounty Hunter
