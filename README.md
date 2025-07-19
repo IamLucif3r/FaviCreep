@@ -1,4 +1,4 @@
-# 🕵️‍♂️ FaviCreep — Hunt Forgotten Infrastructure via Favicon Hash Clustering
+# FaviCreep : Hunt Forgotten Infrastructure via Favicon Hash Clustering
 
 > "Every forgotten panel tells a story... and leaves a door wide open."  
 > — Unknown Bug Bounty Hunter

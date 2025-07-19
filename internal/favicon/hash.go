@@ -8,109 +8,52 @@ import (
 	"strings"
 	"time"
 
-	"net/url"
-
 	"github.com/spaolacci/murmur3"
-	"golang.org/x/net/html"
 )
 
-func HashFavicon(baseURL string) (uint32, error) {
-	baseURL = strings.TrimSuffix(baseURL, "/")
+var client = &http.Client{
+	Timeout: 10 * time.Second,
+	CheckRedirect: func(req *http.Request, via []*http.Request) error {
+		if len(via) >= 3 {
+			return fmt.Errorf("too many redirects")
+		}
+		return nil
+	},
+}
 
-	favURL, err := fetchFaviconURL(baseURL)
-	if err != nil {
-		return 0, fmt.Errorf("failed to find favicon: %w", err)
-	}
+func HashFavicon(url string) (uint32, error) {
+	favURL := normalizeFaviconURL(url)
 
-	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Get(favURL)
 	if err != nil {
-		return 0, fmt.Errorf("failed to fetch favicon at %s: %w", favURL, err)
+		return 0, fmt.Errorf("failed to fetch favicon: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return 0, fmt.Errorf("favicon fetch returned status: %s", resp.Status)
+		return 0, fmt.Errorf("bad status code %d", resp.StatusCode)
 	}
 
-	data, err := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return 0, fmt.Errorf("failed to read favicon body: %w", err)
+		return 0, fmt.Errorf("failed to read favicon: %w", err)
 	}
 
-	encoded := base64.StdEncoding.EncodeToString(data)
+	encoded := base64.StdEncoding.EncodeToString(body)
 
-	return murmur3.Sum32([]byte(encoded)), nil
+	hasher := murmur3.New32()
+	_, err = hasher.Write([]byte(encoded))
+	if err != nil {
+		return 0, fmt.Errorf("failed to write to hash: %w", err)
+	}
+
+	return hasher.Sum32(), nil
 }
 
-func fetchFaviconURL(baseURL string) (string, error) {
-
-	favURL := baseURL + "/favicon.ico"
-	ok, err := urlExists(favURL)
-	if err == nil && ok {
-		return favURL, nil
+func normalizeFaviconURL(url string) string {
+	url = strings.TrimRight(url, "/")
+	if !strings.HasSuffix(url, ".ico") {
+		return url + "/favicon.ico"
 	}
-
-	client := &http.Client{Timeout: 10 * time.Second}
-	resp, err := client.Get(baseURL)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	doc, err := html.Parse(resp.Body)
-	if err != nil {
-		return "", err
-	}
-
-	var faviconHref string
-	var f func(*html.Node)
-	f = func(n *html.Node) {
-		if n.Type == html.ElementNode && n.Data == "link" {
-			rel := ""
-			href := ""
-			for _, attr := range n.Attr {
-				if attr.Key == "rel" {
-					rel = attr.Val
-				}
-				if attr.Key == "href" {
-					href = attr.Val
-				}
-			}
-			if strings.Contains(strings.ToLower(rel), "icon") && href != "" && faviconHref == "" {
-				faviconHref = href
-			}
-		}
-		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			f(c)
-		}
-	}
-	f(doc)
-
-	if faviconHref == "" {
-		return "", fmt.Errorf("no favicon found")
-	}
-
-	u, err := url.Parse(faviconHref)
-	if err != nil {
-		return "", err
-	}
-
-	base, err := url.Parse(baseURL)
-	if err != nil {
-		return "", err
-	}
-
-	resolved := base.ResolveReference(u).String()
-	return resolved, nil
-}
-
-func urlExists(u string) (bool, error) {
-	client := &http.Client{Timeout: 5 * time.Second}
-	resp, err := client.Head(u)
-	if err != nil {
-		return false, err
-	}
-	defer resp.Body.Close()
-	return resp.StatusCode == http.StatusOK, nil
+	return url
 }

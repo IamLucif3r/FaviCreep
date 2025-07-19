@@ -15,14 +15,14 @@ var shodanCmd = &cobra.Command{
 	Short: "Search Shodan for hosts matching a favicon hash",
 	Run: func(cmd *cobra.Command, args []string) {
 		if shodanHash == 0 {
-			log.Fatal("❌ Please provide a hash using --hash")
+			log.Fatal("[ERROR] Please provide a hash using --hash")
 		}
 
 		fmt.Printf("🔎 Searching Shodan for favicon hash %d...\n", shodanHash)
 
 		resp, err := shodan.SearchByFaviconHash(shodanHash)
 		if err != nil {
-			log.Fatalf("❌ Shodan search failed: %v", err)
+			log.Fatalf("[ERROR] Shodan search failed: %v", err)
 		}
 
 		fmt.Printf("Found %d matching hosts\n", resp.Total)

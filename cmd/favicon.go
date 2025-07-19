@@ -7,43 +7,48 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/IamLucif3r/favicreep/internal/cluster"
 	"github.com/IamLucif3r/favicreep/internal/favicon"
+	"github.com/IamLucif3r/favicreep/internal/shodan"
 	"github.com/IamLucif3r/favicreep/internal/subdomain"
 	"github.com/IamLucif3r/favicreep/internal/utils"
 	"github.com/spf13/cobra"
 )
 
 var (
-	scanDomain  string
 	concurrency int
 	outputFile  string
+	withShodan  bool
 )
 
 var scanCmd = &cobra.Command{
 	Use:   "scan",
-	Short: "Find subdomains and hash their favicons with concurrency and clustering",
+	Short: "Perform subdomain discovery, hash favicons, cluster and search via Shodan",
 	Run: func(cmd *cobra.Command, args []string) {
-		if scanDomain == "" {
-			log.Fatal("❌ Please provide a domain using --domain")
+		if domain == "" {
+			log.Fatal("[ERROR] Please provide a domain using --domain")
 		}
 
-		spin := utils.NewSpinner("Enumerating subdomains for " + scanDomain)
+		spin := utils.NewSpinner("🔍 Enumerating subdomains for " + domain)
 		spin.Start()
-		subs, err := subdomain.Discover(scanDomain)
+		subs, err := subdomain.Discover(domain)
 		spin.Stop()
+
 		if err != nil {
-			log.Fatalf("❌ Error discovering subdomains: %v", err)
+			log.Fatalf("[ERROR] Failed to discover subdomains: %v", err)
 		}
 
 		if len(subs) == 0 {
-			fmt.Println("⚠️  No subdomains found.")
+			log.Println("[INFO]  No subdomains found.")
 			return
 		}
 
-		fmt.Printf("🔍 Found %d subdomains\n", len(subs))
-		fmt.Println("🔑 Hashing favicons concurrently...")
+		fmt.Printf("[RESULT] Found %d subdomains\n", len(subs))
+
+		spin = utils.NewSpinner("🎨 Fetching and hashing favicons...")
+		spin.Start()
 
 		results := make(map[string]uint32)
 		var mu sync.Mutex
@@ -61,40 +66,56 @@ var scanCmd = &cobra.Command{
 				url := ensureURL(s)
 				hash, err := favicon.HashFavicon(url)
 				if err != nil {
-					fmt.Printf("❌ [%s] Error: %v\n", url, err)
+					log.Printf("[ERROR] [%s] Favicon error: %v", url, err)
 					return
 				}
 
 				mu.Lock()
 				results[s] = hash
 				mu.Unlock()
-
-				fmt.Printf("✅ [%s] mmh3: %d\n", url, hash)
 			}(sub)
 		}
 
 		wg.Wait()
+		spin.Stop()
 
 		clusters := cluster.Cluster(results)
+		fmt.Printf("[RESULT] Found %d favicon hash clusters\n", len(clusters))
 
-		fmt.Println("\n📊 Clustering results:")
-		for hash, domains := range clusters {
-			fmt.Printf("Hash: %d\n", hash)
-			for _, d := range domains {
-				fmt.Printf(" - %s\n", d)
+		shodanResults := make(map[uint32][]string)
+		if withShodan {
+			fmt.Println("[INFO] Performing Shodan lookups...")
+			for hash := range clusters {
+				res, err := shodan.SearchByFaviconHash(hash)
+				if err != nil {
+					log.Printf("[ERROR] Shodan search error for hash %d: %v", hash, err)
+					continue
+				}
+				var hosts []string
+				for _, match := range res.Matches {
+					hosts = append(hosts, fmt.Sprintf("%s:%d", match.IPStr, match.Port))
+				}
+				shodanResults[hash] = hosts
 			}
 		}
 
 		if outputFile != "" {
-			data, err := json.MarshalIndent(clusters, "", "  ")
-			if err != nil {
-				log.Fatalf("❌ Failed to marshal clusters to JSON: %v", err)
+			data := map[string]any{
+				"domain":       domain,
+				"discovered":   subs,
+				"clusters":     clusters,
+				"shodan":       shodanResults,
+				"generated_at": time.Now().Format(time.RFC3339),
 			}
-			err = os.WriteFile(outputFile, data, 0644)
+
+			bytes, err := json.MarshalIndent(data, "", "  ")
 			if err != nil {
-				log.Fatalf("❌ Failed to write output file: %v", err)
+				log.Fatalf("[ERROR] Failed to marshal output: %v", err)
 			}
-			fmt.Printf("✅ Results saved to %s\n", outputFile)
+			if err := os.WriteFile(outputFile, bytes, 0644); err != nil {
+				log.Fatalf("[ERROR] Failed to write output file: %v", err)
+			}
+			fmt.Printf("[INFO] Results saved to %s\n", outputFile)
 		}
 	},
 }
@@ -107,8 +128,9 @@ func ensureURL(sub string) string {
 }
 
 func init() {
-	scanCmd.Flags().StringVar(&scanDomain, "domain", "", "Domain to scan (e.g. example.com)")
+	scanCmd.Flags().StringVar(&domain, "domain", "", "Target domain (required)")
 	scanCmd.Flags().IntVarP(&concurrency, "concurrency", "c", 10, "Number of concurrent favicon fetches")
-	scanCmd.Flags().StringVarP(&outputFile, "output", "o", "", "Write clustering results to JSON file")
+	scanCmd.Flags().StringVarP(&outputFile, "output", "o", "", "Save results to a JSON file")
+	scanCmd.Flags().BoolVar(&withShodan, "shodan", false, "Enable Shodan lookup for each favicon hash")
 	rootCmd.AddCommand(scanCmd)
 }

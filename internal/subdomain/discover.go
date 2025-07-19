@@ -1,6 +1,7 @@
 package subdomain
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"os/exec"
@@ -8,25 +9,29 @@ import (
 )
 
 func Discover(domain string) ([]string, error) {
-
-	cmd := exec.Command("subfinder", "-d", domain, "-silent")
-
 	var out bytes.Buffer
+	cmd := exec.Command("subfinder", "-silent", "-d", domain)
+
 	cmd.Stdout = &out
-	cmd.Stderr = &out
+	cmd.Stderr = nil
 
 	err := cmd.Run()
 	if err != nil {
-		return nil, fmt.Errorf("subfinder failed: %v\n%s", err, out.String())
+		return nil, fmt.Errorf("failed to run subfinder: %w", err)
 	}
 
-	lines := strings.Split(out.String(), "\n")
-	var results []string
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-		if line != "" {
-			results = append(results, line)
+	var subdomains []string
+	scanner := bufio.NewScanner(&out)
+	for scanner.Scan() {
+		sub := strings.TrimSpace(scanner.Text())
+		if sub != "" {
+			subdomains = append(subdomains, sub)
 		}
 	}
-	return results, nil
+
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("error reading subfinder output: %w", err)
+	}
+
+	return subdomains, nil
 }
