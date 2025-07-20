@@ -1,4 +1,5 @@
-<img width="1028" height="467" alt="Screenshot 2025-07-20 at 01 35 45" src="https://github.com/user-attachments/assets/0d3cad60-d8d9-4d19-8538-c4c7b3368a9c" />
+
+![Favicreep](https://github.com/user-attachments/assets/37e7b040-93fc-41a6-86fc-6d55a48fcf49)
 
 
 # FaviCreep
