@@ -73,6 +73,11 @@ Example:
 
 ./favicreep scan --domain hackerone.com -c 20 -o hackerone_clusters.json
 ```
+##### NOTE: You need to set your Shodan API key in environment variable :
+
+```bash
+export SHODAN_API_KEY="YOUR_API_KEY"
+```
 
 #### 2. Hunt Internet-wide via Shodan
 ```bash
