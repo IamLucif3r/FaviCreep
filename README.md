@@ -46,7 +46,11 @@ A goldmine of attack surface you were never supposed to see.
 ---
 
 ## 🧱 Installation
+### Use the tool directly
 
+```bash
+go install github.com/iamlucif3r/favicreep@latest
+```
 **Requirements:**
 
 - Go 1.20+
