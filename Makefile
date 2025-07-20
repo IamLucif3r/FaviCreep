@@ -8,11 +8,11 @@ all: build
 build:
 	@echo "Building $(BINARY_NAME)..."
 	@mkdir -p $(BUILD_DIR)
-	go build -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/favicreep
+	go build -o $(BUILD_DIR)/$(BINARY_NAME) main.go
 
 install:
 	@echo "Installing $(BINARY_NAME)..."
-	@go install ./cmd/favicreep
+	@go install main.go
 
 clean:
 	@echo "Cleaning build artifacts..."
