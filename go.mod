@@ -1,4 +1,4 @@
-module github.com/IamLucif3r/favicreep
+module github.com/IamLucif3r/FaviCreep
 
 go 1.24.5
 
