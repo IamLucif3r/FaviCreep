@@ -9,11 +9,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/IamLucif3r/favicreep/internal/cluster"
-	"github.com/IamLucif3r/favicreep/internal/favicon"
-	"github.com/IamLucif3r/favicreep/internal/shodan"
-	"github.com/IamLucif3r/favicreep/internal/subdomain"
-	"github.com/IamLucif3r/favicreep/internal/utils"
+	"github.com/iamlucif3r/favicreep/internal/cluster"
+	"github.com/iamlucif3r/favicreep/internal/favicon"
+	"github.com/iamlucif3r/favicreep/internal/shodan"
+	"github.com/iamlucif3r/favicreep/internal/subdomain"
+	"github.com/iamlucif3r/favicreep/internal/utils"
 	"github.com/spf13/cobra"
 )
 

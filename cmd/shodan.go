@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/IamLucif3r/favicreep/internal/shodan"
+	"github.com/iamlucif3r/favicreep/internal/shodan"
 	"github.com/spf13/cobra"
 )
 

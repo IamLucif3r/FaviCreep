@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/IamLucif3r/favicreep/internal/subdomain"
-	"github.com/IamLucif3r/favicreep/internal/utils"
+	"github.com/iamlucif3r/favicreep/internal/subdomain"
+	"github.com/iamlucif3r/favicreep/internal/utils"
 	"github.com/spf13/cobra"
 )
 

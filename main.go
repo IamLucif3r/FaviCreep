@@ -1,6 +1,6 @@
 package main
 
-import "github.com/IamLucif3r/favicreep/cmd"
+import "github.com/iamlucif3r/favicreep/cmd"
 
 func main() {
 	cmd.Execute()
