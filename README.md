@@ -49,7 +49,7 @@ A goldmine of attack surface you were never supposed to see.
 ### Use the tool directly
 
 ```bash
-go install github.com/iamlucif3r/favicreep@latest
+go install github.com/iamlucif3r/FaviCreep@latest
 ```
 **Requirements:**
 
@@ -60,7 +60,7 @@ go install github.com/iamlucif3r/favicreep@latest
 ```bash
 git clone https://github.com/iamlucif3r/favicreep.git
 cd favicreep
-go build -o favicreep ./cmd/favicreep/main.go
+go build -o favicreep main.go
 ```
 
 ## 🧪 Usage
